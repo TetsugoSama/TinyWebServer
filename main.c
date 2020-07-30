@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 
     // 设置端口复用，绑定端口
     int flag = 1;
-    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)); /*允许重用本地地址，flag表示关闭套接字后可以继续使用该套接字*/
     ret = bind(listenfd, (struct sockaddr *)&address, sizeof(address));
     assert(ret >= 0);
     ret = listen(listenfd, 5);
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 
     while (!stop_server)
     {
-        int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
+        int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);/*epoll监听事件*/
         if (number < 0 && errno != EINTR)
         {
             LOG_ERROR("%s", "epoll failure");
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
                 struct sockaddr_in client_address;
                 socklen_t client_addrlength = sizeof(client_address);
 #ifdef LT
-                int connfd = accept(listenfd, (struct sockaddr *)&client_address, &client_addrlength);
+                int connfd = accept(listenfd, (struct sockaddr *)&client_address, &client_addrlength); /*获取已经到达的连接*/
                 if (connfd < 0)
                 {
                     LOG_ERROR("%s:errno is:%d", "accept error", errno);
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
                     LOG_ERROR("%s", "Internal server busy");
                     continue;
                 }
-                users[connfd].init(connfd, client_address);
+                users[connfd].init(connfd, client_address); /*对于http连接池的每个连接，都加入到epoll实例中监听，并记录连接的客户端地址*/
 
                 //初始化client_data数据
                 //创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
                 //服务器端关闭连接，移除对应的定时器
                 util_timer *timer = users_timer[sockfd].timer;
                 timer->cb_func(&users_timer[sockfd]);
-                
+
                 if (timer)
                 {
                     timer_lst.del_timer(timer);
